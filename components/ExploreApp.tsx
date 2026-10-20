@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  FormEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -10,6 +9,7 @@ import {
 } from "react";
 import type mapboxgl from "mapbox-gl";
 import { camps, type Camp, type CampFilter } from "@/lib/camps";
+import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -168,7 +168,6 @@ export default function ExploreApp() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
-  const [authMessage, setAuthMessage] = useState("");
 
   useEffect(() => {
     try {
@@ -393,13 +392,6 @@ export default function ExploreApp() {
     );
   }
 
-  function authSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setAuthMessage(
-      "Connect this form to Supabase Auth to sign in. Saved places currently live on this device.",
-    );
-  }
-
   return (
     <main className="app-shell">
       <aside
@@ -580,7 +572,6 @@ export default function ExploreApp() {
             className="account-button"
             onClick={() => {
               setAuthMode("signin");
-              setAuthMessage("");
               setAuthOpen(true);
             }}
           >
@@ -729,52 +720,13 @@ export default function ExploreApp() {
             {authMode === "signup" ? (
               <SignUpForm
                 arrowIcon={<Icon name="arrow" size={17} />}
-                onSignIn={() => {
-                  setAuthMode("signin");
-                  setAuthMessage("");
-                }}
+                onSignIn={() => setAuthMode("signin")}
               />
             ) : (
-              <>
-                <h2 id="auth-title">Welcome back.</h2>
-                <p>
-                  Sign in to share campsites and keep your favorite places close.
-                </p>
-                <form onSubmit={authSubmit}>
-                  <label htmlFor="auth-email">Email address</label>
-                  <input
-                    id="auth-email"
-                    type="email"
-                    required
-                    placeholder="you@example.com"
-                  />
-                  <label htmlFor="auth-password">Password</label>
-                  <input
-                    id="auth-password"
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="Your password"
-                  />
-                  <button type="submit">
-                    Sign in <Icon name="arrow" size={17} />
-                  </button>
-                </form>
-                <button
-                  className="auth-switch"
-                  onClick={() => {
-                    setAuthMode("signup");
-                    setAuthMessage("");
-                  }}
-                >
-                  New here? Create an account
-                </button>
-                {authMessage && (
-                  <p className="auth-message" role="status">
-                    {authMessage}
-                  </p>
-                )}
-              </>
+              <SignInForm
+                arrowIcon={<Icon name="arrow" size={17} />}
+                onSignUp={() => setAuthMode("signup")}
+              />
             )}
             <div className="auth-footnote">
               Account creation and login require your Supabase connection.

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { signup } from "@/app/auth/actions";
+import { useActionState, type ReactNode } from "react";
 
 type SignUpFormProps = {
   arrowIcon: ReactNode;
@@ -8,24 +9,18 @@ type SignUpFormProps = {
 };
 
 export default function SignUpForm({ arrowIcon, onSignIn }: SignUpFormProps) {
-  const [message, setMessage] = useState("");
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage(
-      "Connect this form to Supabase Auth to create an account. Saved places currently live on this device.",
-    );
-  }
+  const [state, signupAction, pending] = useActionState(signup, { error: null });
 
   return (
     <>
       <h2 id="auth-title">Join the collective.</h2>
       <p>Create an account to share your discoveries with the community.</p>
-      <form onSubmit={handleSubmit}>
+      <form action={signupAction}>
         <label htmlFor="auth-email">Email address</label>
         <input
           id="auth-email"
           type="email"
+          name="email"
           required
           placeholder="you@example.com"
         />
@@ -33,20 +28,21 @@ export default function SignUpForm({ arrowIcon, onSignIn }: SignUpFormProps) {
         <input
           id="auth-password"
           type="password"
+          name="password"
           required
           minLength={6}
           placeholder="Create a password"
         />
-        <button type="submit">
-          Create account {arrowIcon}
+        <button type="submit" disabled={pending}>
+          {pending ? "Creating account…" : "Create account"} {arrowIcon}
         </button>
       </form>
-      <button className="auth-switch" onClick={onSignIn}>
+      <button className="auth-switch" type="button" onClick={onSignIn}>
         Already have an account? Sign in
       </button>
-      {message && (
-        <p className="auth-message" role="status">
-          {message}
+      {state.error && (
+        <p className="auth-message" role="alert">
+          {state.error}
         </p>
       )}
     </>
