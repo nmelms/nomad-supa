@@ -600,7 +600,14 @@ export default function ExploreApp() {
               href="/account"
               aria-label="Open your account"
             >
-              <img src={profile.avatar_url} alt="Your account" />
+              <img
+                src={
+                  supabase.storage
+                    .from("avatars")
+                    .getPublicUrl(profile.avatar_url).data.publicUrl
+                }
+                alt="Your account"
+              />
             </a>
           ) : (
             <button
