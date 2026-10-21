@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
+import { signInWithEmail } from "@/app/auth/actions";
 
 type SignInFormProps = {
   arrowIcon: ReactNode;
@@ -10,22 +11,16 @@ type SignInFormProps = {
 export default function SignInForm({ arrowIcon, onSignUp }: SignInFormProps) {
   const [message, setMessage] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage(
-      "Connect this form to Supabase Auth to sign in. Saved places currently live on this device.",
-    );
-  }
-
   return (
     <>
       <h2 id="auth-title">Welcome back.</h2>
       <p>Sign in to share campsites and keep your favorite places close.</p>
-      <form onSubmit={handleSubmit}>
+      <form action={signInWithEmail} method="POST">
         <label htmlFor="auth-email">Email address</label>
         <input
           id="auth-email"
           type="email"
+          name="email"
           required
           placeholder="you@example.com"
         />
@@ -33,13 +28,12 @@ export default function SignInForm({ arrowIcon, onSignUp }: SignInFormProps) {
         <input
           id="auth-password"
           type="password"
+          name="password"
           required
           minLength={6}
           placeholder="Your password"
         />
-        <button type="submit">
-          Sign in {arrowIcon}
-        </button>
+        <button type="submit">Sign in {arrowIcon}</button>
       </form>
       <button className="auth-switch" type="button" onClick={onSignUp}>
         New here? Create an account

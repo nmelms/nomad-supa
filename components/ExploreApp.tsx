@@ -602,9 +602,11 @@ export default function ExploreApp() {
             >
               <img
                 src={
-                  supabase.storage
-                    .from("avatars")
-                    .getPublicUrl(profile.avatar_url).data.publicUrl
+                  profile.avatar_url
+                    ? supabase.storage
+                        .from("avatars")
+                        .getPublicUrl(profile.avatar_url).data.publicUrl
+                    : ""
                 }
                 alt="Your account"
               />

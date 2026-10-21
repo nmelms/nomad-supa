@@ -144,7 +144,7 @@ export default function AccountForm({ claims }: { claims: Claims | null }) {
               />
             </div>
             <p className="account-member-label">YOUR ACCOUNT</p>
-            <h2>Welcome {email}</h2>
+            <h2>Welcome {fullname}</h2>
             <p className="account-member-copy">
               A home base for your profile and the places you love to explore.
             </p>
