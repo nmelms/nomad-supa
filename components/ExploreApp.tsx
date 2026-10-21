@@ -1,17 +1,13 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type mapboxgl from "mapbox-gl";
 import { camps, type Camp, type CampFilter } from "@/lib/camps";
 import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { createClient } from "@/lib/supabase/client";
+import { Session } from "@supabase/supabase-js";
 
 const START_CENTER: [number, number] = [-108.03, 38.06];
 const START_ZOOM = 6.3;
@@ -168,6 +164,9 @@ export default function ExploreApp() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+
+  const supabase = createClient();
 
   useEffect(() => {
     try {
@@ -228,6 +227,7 @@ export default function ExploreApp() {
       });
   }, []);
 
+  // mapbox stuf
   useEffect(() => {
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN?.trim();
     if (!token) {
@@ -337,6 +337,12 @@ export default function ExploreApp() {
           : "mapbox://styles/mapbox/satellite-streets-v12",
       );
   }, [style, mapStatus]);
+  // check if signed in
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
+  }, []);
 
   function toggleSaved(id: string) {
     setSavedIds((current) => {
@@ -568,15 +574,26 @@ export default function ExploreApp() {
             <span className="context-dot" /> EXPLORE THE OUTDOORS{" "}
             <span className="context-divider">/</span> COLORADO + UTAH
           </div>
-          <button
-            className="account-button"
-            onClick={() => {
-              setAuthMode("signin");
-              setAuthOpen(true);
-            }}
-          >
-            Sign in <Icon name="arrow" size={15} />
-          </button>
+
+          {session ? (
+            <a
+              className="account-button"
+              href="/account"
+              aria-label="Open your account"
+            >
+              <img src="https://i.pravatar.cc/80?img=12" alt="Your account" />
+            </a>
+          ) : (
+            <button
+              className="account-button"
+              onClick={() => {
+                setAuthMode("signin");
+                setAuthOpen(true);
+              }}
+            >
+              Sign in
+            </button>
+          )}
         </div>
         <div className="map-actions">
           <button
