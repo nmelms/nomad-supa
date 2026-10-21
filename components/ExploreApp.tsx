@@ -165,6 +165,7 @@ export default function ExploreApp() {
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<any>(null);
 
   const supabase = createClient();
 
@@ -343,6 +344,24 @@ export default function ExploreApp() {
       setSession(data.session);
     });
   }, []);
+
+  useEffect(() => {
+    async function getProfile() {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session?.user.id)
+        .single();
+
+      if (error != null) {
+        console.log("there was an error in getProfile");
+        return;
+      }
+      setProfile(data);
+    }
+
+    getProfile();
+  }, [session]);
 
   function toggleSaved(id: string) {
     setSavedIds((current) => {
@@ -575,13 +594,13 @@ export default function ExploreApp() {
             <span className="context-divider">/</span> COLORADO + UTAH
           </div>
 
-          {session ? (
+          {profile ? (
             <a
               className="account-button"
               href="/account"
               aria-label="Open your account"
             >
-              <img src="https://i.pravatar.cc/80?img=12" alt="Your account" />
+              <img src={profile.avatar_url} alt="Your account" />
             </a>
           ) : (
             <button
