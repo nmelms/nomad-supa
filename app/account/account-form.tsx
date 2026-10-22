@@ -11,6 +11,7 @@ export default function AccountForm({ claims }: { claims: Claims | null }) {
   const [fullname, setFullname] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [website, setWebsite] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState<string | null>(null);
   const [avatar_url, setAvatarUrl] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
 
@@ -56,13 +57,18 @@ export default function AccountForm({ claims }: { claims: Claims | null }) {
     username,
     website,
     avatar_url,
+    newPassword,
   }: {
     username: string | null;
     fullname: string | null;
     website: string | null;
     avatar_url: string | null;
+    newPassword: string | null;
   }) {
     try {
+      if (newPassword) {
+        await supabase.auth.updateUser({ password: newPassword });
+      }
       if (!claims?.sub) {
         alert("You must be logged in to update your profile");
         return;
@@ -139,6 +145,7 @@ export default function AccountForm({ claims }: { claims: Claims | null }) {
                     username,
                     website,
                     avatar_url: url,
+                    newPassword,
                   });
                 }}
               />
@@ -217,6 +224,15 @@ export default function AccountForm({ claims }: { claims: Claims | null }) {
                   onChange={(e) => setWebsite(e.target.value)}
                 />
               </div>
+              <div className="account-field">
+                <label htmlFor="website">Update Password</label>
+                <input
+                  id="newPassword"
+                  type="url"
+                  value={newPassword || ""}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="account-form-actions">
@@ -224,7 +240,13 @@ export default function AccountForm({ claims }: { claims: Claims | null }) {
               <button
                 className="button primary block"
                 onClick={() =>
-                  updateProfile({ fullname, username, website, avatar_url })
+                  updateProfile({
+                    fullname,
+                    username,
+                    website,
+                    avatar_url,
+                    newPassword,
+                  })
                 }
                 disabled={loading || !claims?.sub}
               >

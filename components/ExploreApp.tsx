@@ -5,6 +5,7 @@ import type mapboxgl from "mapbox-gl";
 import { camps, type Camp, type CampFilter } from "@/lib/camps";
 import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
+import AddLocationDialog, { type NewLocation } from "@/components/AddLocationDialog";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { createClient } from "@/lib/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -12,6 +13,7 @@ import { Session } from "@supabase/supabase-js";
 const START_CENTER: [number, number] = [-108.03, 38.06];
 const START_ZOOM = 6.3;
 const SAVED_KEY = "nomad-saved-camps";
+const USER_LOCATIONS_KEY = "nomad-user-locations";
 type MapStatus = "loading" | "ready" | "error";
 type ViewMode = "explore" | "saved";
 type MapStyle = "outdoors" | "satellite";
@@ -30,7 +32,8 @@ function Icon({
     | "filter"
     | "arrow"
     | "mountain"
-    | "menu";
+    | "menu"
+    | "plus";
   size?: number;
 }) {
   const paths: Record<typeof name, React.ReactNode> = {
@@ -82,6 +85,7 @@ function Icon({
       </>
     ),
     menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+    plus: <path d="M12 5v14M5 12h14" />,
   };
   return (
     <svg
@@ -156,6 +160,8 @@ export default function ExploreApp() {
   const [viewMode, setViewMode] = useState<ViewMode>("explore");
   const [style, setStyle] = useState<MapStyle>("outdoors");
   const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [userLocations, setUserLocations] = useState<Camp[]>([]);
+  const [addLocationOpen, setAddLocationOpen] = useState(false);
   const [areaBounds, setAreaBounds] = useState<
     [number, number, number, number] | null
   >(null);
@@ -177,9 +183,22 @@ export default function ExploreApp() {
     }
   }, []);
 
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(
+        window.localStorage.getItem(USER_LOCATIONS_KEY) || "[]",
+      );
+      if (Array.isArray(stored)) setUserLocations(stored);
+    } catch {
+      setUserLocations([]);
+    }
+  }, []);
+
+  const allCamps = useMemo(() => [...camps, ...userLocations], [userLocations]);
+
   const filteredCamps = useMemo(
     () =>
-      camps.filter((camp) => {
+      allCamps.filter((camp) => {
         const text = query.trim().toLowerCase();
         const matchesText =
           !text ||
@@ -206,10 +225,10 @@ export default function ExploreApp() {
             lat <= areaBounds[3]);
         return matchesText && matchesFilter && matchesSaved && matchesArea;
       }),
-    [query, activeFilter, viewMode, savedIds, areaBounds],
+    [allCamps, query, activeFilter, viewMode, savedIds, areaBounds],
   );
 
-  const selected = camps.find((camp) => camp.id === selectedId) || null;
+  const selected = allCamps.find((camp) => camp.id === selectedId) || null;
 
   useEffect(() => {
     if (selectedId && !filteredCamps.some((camp) => camp.id === selectedId))
@@ -415,6 +434,31 @@ export default function ExploreApp() {
         ),
       { enableHighAccuracy: false, timeout: 10000 },
     );
+  }
+
+  function addLocation({ name, state, latitude, longitude }: NewLocation) {
+    const location: Camp = {
+      id: `user-location-${Date.now()}`,
+      name,
+      state,
+      region: state,
+      coordinates: [longitude, latitude],
+      shortDescription: "Community-added location.",
+      description: "Added by a Nomad Collective community member.",
+      features: ["Community added"],
+      filters: [],
+      access: "Not listed",
+      cell: "Not listed",
+      bestFor: "Explore responsibly",
+    };
+    setUserLocations((current) => {
+      const next = [...current, location];
+      window.localStorage.setItem(USER_LOCATIONS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setAddLocationOpen(false);
+    setAreaBounds(null);
+    openCamp(location);
   }
 
   return (
@@ -625,6 +669,13 @@ export default function ExploreApp() {
         </div>
         <div className="map-actions">
           <button
+            onClick={() => setAddLocationOpen(true)}
+            title="Add a location"
+          >
+            <Icon name="plus" />
+            <span>Add location</span>
+          </button>
+          <button
             onClick={() =>
               setStyle((current) =>
                 current === "outdoors" ? "satellite" : "outdoors",
@@ -778,6 +829,12 @@ export default function ExploreApp() {
             </div>
           </div>
         </div>
+      )}
+      {addLocationOpen && (
+        <AddLocationDialog
+          onClose={() => setAddLocationOpen(false)}
+          onAdd={addLocation}
+        />
       )}
     </main>
   );
