@@ -1,5 +1,6 @@
 "use client";
 
+import { addCampsite } from "@/app/campsites/actions";
 import { useState, type FormEvent } from "react";
 
 export type NewLocation = {
@@ -57,12 +58,24 @@ export default function AddLocationDialog({
     const latitude = Number(data.get("latitude"));
     const longitude = Number(data.get("longitude"));
 
-    if (!name || !state || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    if (
+      !name ||
+      !state ||
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
+    ) {
       setError("Enter a name, state, latitude, and longitude.");
       return;
     }
-    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-      setError("Latitude must be between -90 and 90; longitude between -180 and 180.");
+    if (
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      setError(
+        "Latitude must be between -90 and 90; longitude between -180 and 180.",
+      );
       return;
     }
 
@@ -82,14 +95,22 @@ export default function AddLocationDialog({
         aria-modal="true"
         aria-labelledby="add-location-title"
       >
-        <button className="auth-close" onClick={onClose} aria-label="Close add location form">
+        <button
+          className="auth-close"
+          onClick={onClose}
+          aria-label="Close add location form"
+        >
           <DialogIcon name="close" />
         </button>
-        <div className="brand-mark"><DialogIcon name="pin" /></div>
+        <div className="brand-mark">
+          <DialogIcon name="pin" />
+        </div>
         <span className="eyebrow">SHARE A PLACE</span>
         <h2 id="add-location-title">Add a location</h2>
-        <p>Keep it simple for now: just the basics to place a pin on the map.</p>
-        <form onSubmit={handleSubmit}>
+        <p>
+          Keep it simple for now: just the basics to place a pin on the map.
+        </p>
+        <form action={addCampsite}>
           <label htmlFor="location-name">Location name</label>
           <input id="location-name" name="name" required autoFocus />
           <label htmlFor="location-state">State</label>
@@ -97,17 +118,41 @@ export default function AddLocationDialog({
           <div className="coordinate-fields">
             <div>
               <label htmlFor="location-latitude">Latitude</label>
-              <input id="location-latitude" name="latitude" type="number" step="any" min="-90" max="90" required />
+              <input
+                id="location-latitude"
+                name="latitude"
+                type="number"
+                step="any"
+                min="-90"
+                max="90"
+                required
+              />
             </div>
             <div>
               <label htmlFor="location-longitude">Longitude</label>
-              <input id="location-longitude" name="longitude" type="number" step="any" min="-180" max="180" required />
+              <input
+                id="location-longitude"
+                name="longitude"
+                type="number"
+                step="any"
+                min="-180"
+                max="180"
+                required
+              />
             </div>
           </div>
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <button type="submit">Add to map <DialogIcon name="arrow" /></button>
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+          <button type="submit">
+            Add to map <DialogIcon name="arrow" />
+          </button>
         </form>
-        <div className="auth-footnote">Locations are saved in this browser for now.</div>
+        <div className="auth-footnote">
+          Locations are saved in this browser for now.
+        </div>
       </div>
     </div>
   );

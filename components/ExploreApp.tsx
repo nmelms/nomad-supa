@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type mapboxgl from "mapbox-gl";
-import { camps, type Camp, type CampFilter } from "@/lib/camps";
+import { type Camp, type CampFilter } from "@/lib/camps";
 import SignInForm from "@/components/SignInForm";
 import SignUpForm from "@/components/SignUpForm";
-import AddLocationDialog, { type NewLocation } from "@/components/AddLocationDialog";
+import AddLocationDialog, {
+  type NewLocation,
+} from "@/components/AddLocationDialog";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { createClient } from "@/lib/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -172,6 +174,7 @@ export default function ExploreApp() {
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [campsites, setCampsites] = useState<Camp[]>([]);
 
   const supabase = createClient();
 
@@ -194,7 +197,61 @@ export default function ExploreApp() {
     }
   }, []);
 
-  const allCamps = useMemo(() => [...camps, ...userLocations], [userLocations]);
+  // get camps
+  useEffect(() => {
+    async function fetchSites() {
+      const { data, error } = await supabase.from("campsites").select("*");
+
+      if (error) {
+        console.error("There was an error fetching campsites:", error);
+        return;
+      }
+
+      console.log("this is the data form the fetch: ", data);
+
+      setCampsites(
+        (data ?? []).flatMap((campsite): Camp[] => {
+          const latitude = Number(campsite.lat);
+          const longitude = Number(campsite.lng);
+
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            console.warn(
+              "Skipping campsite with invalid coordinates:",
+              campsite,
+            );
+            return [];
+          }
+
+          return [
+            {
+              id: campsite.id,
+              name: campsite.name,
+              region: campsite.region ?? campsite.state,
+              state: campsite.state,
+              coordinates: [campsite.lng, campsite.lat],
+              shortDescription:
+                campsite.short_description ?? "Community-added campsite.",
+              description:
+                campsite.description ??
+                "Added by a Nomad Collective community member.",
+              features: campsite.features ?? ["Community added"],
+              filters: campsite.filters ?? [],
+              access: campsite.access ?? "Not listed",
+              cell: campsite.cell ?? "Not listed",
+              bestFor: campsite.best_for ?? "All campers",
+            },
+          ];
+        }),
+      );
+    }
+
+    fetchSites();
+  }, []);
+
+  const allCamps = useMemo(
+    () => [...campsites, ...userLocations],
+    [campsites, userLocations],
+  );
 
   const filteredCamps = useMemo(
     () =>
@@ -246,6 +303,25 @@ export default function ExploreApp() {
         essential: true,
       });
   }, []);
+
+  async function testSupabaseFunction() {
+    const { data, error } = await supabase.functions.invoke("testing");
+    if (error) {
+      const response = error.context;
+      if (response instanceof Response) {
+        const body = await response.clone().text();
+        console.error("Testing function failed", {
+          status: response.status,
+          body,
+          error,
+        });
+      } else {
+        console.error("Testing function request failed", error);
+      }
+      return;
+    }
+    console.log(data);
+  }
 
   // mapbox stuf
   useEffect(() => {
@@ -674,6 +750,10 @@ export default function ExploreApp() {
           >
             <Icon name="plus" />
             <span>Add location</span>
+          </button>
+          <button onClick={() => testSupabaseFunction()} title="Add a location">
+            <Icon name="plus" />
+            <span>test supabase function</span>
           </button>
           <button
             onClick={() =>
